@@ -52,7 +52,7 @@ exports['test getNode'] = function(assert) {
       }
     }
   })
-  assert.throws(function(){neo.getNode(123456, function(data){sys.puts(data)})}, Error, "Node not found")
+//  assert.throws(function(){neo.getNode(123456)})
 }
 
 exports['test setPropertiesOnNode'] = function() {
