@@ -42,7 +42,7 @@ exports.getRoot = function(callback) {
   request.addListener("response", function(response){
     var body = ""
     response.setEncoding('utf8')
-    if (response.statusCode == 200) {
+    if (response.statusCode === 200) {
       response.addListener("data", function(chunk){
         body += chunk
       })
@@ -74,14 +74,14 @@ exports.createNode = function(properties, callback) {
   request.addListener("response", function(response){
     var body = "", location = response.headers['location']
     response.setEncoding('utf8')
-    if (response.statusCode == 201 && location) {
+    if (response.statusCode === 201 && location) {
       response.addListener("data", function(chunk){
         body += chunk
       })
       response.addListener("end", function() {
         callback(location, body)
       })
-    } else if (response.statusCode == 400) {
+    } else if (response.statusCode === 400) {
       throw new Error('Invalid data sent: ' + properties)
     } else throw new Error('Server error')
   })
@@ -94,14 +94,14 @@ exports.getNode = function(id, callback) {
   request.addListener("response", function(response){
     var body = ""
     response.setEncoding('utf8')
-    if (response.statusCode == 200) {
+    if (response.statusCode === 200) {
       response.addListener("data", function(chunk){
         body += chunk
       })
       response.addListener("end", function() {
         callback(body)
       })
-    } else if (response.statusCode == 404) {
+    } else if (response.statusCode === 404) {
       throw new Error('Node not found')
     } else throw new Error('Server error')
   })
@@ -118,14 +118,14 @@ exports.getPropertiesOnNode = function(id, callback) {
   request.addListener("response", function(response){
     var body = ""
     response.setEncoding('utf8')
-    if (response.statusCode == 200) {
+    if (response.statusCode === 200) {
       response.addListener("data", function(chunk){
         body += chunk
       })
       response.addListener("end", function() {
         callback(body)
       })
-    } else if (response.statusCode == 404) {
+    } else if (response.statusCode === 404) {
       throw new Error('Node not found')
     } else throw new Error('Server error')
   })
