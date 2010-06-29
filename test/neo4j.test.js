@@ -1,7 +1,7 @@
 var neo = require('../neo4j')
 var sys = require('sys')
 
-exports['test getRoot'] = function(assert) {
+exports['test getRoot()'] = function(assert) {
   neo.getRoot(function(data){
     var json = JSON.parse(data)
     var expected = {
@@ -13,7 +13,7 @@ exports['test getRoot'] = function(assert) {
   })
 }
 
-exports['test createNode'] = function(assert) {
+exports['test createNode()'] = function(assert) {
   var locationMatcher = function(url){assert.ok(url.match(/\/node\/\d{1,}$/))}
   neo.createNode(function(data){
     locationMatcher(data)
@@ -21,10 +21,10 @@ exports['test createNode'] = function(assert) {
   neo.createNode({test: "me", out: "please"}, function(data){
     locationMatcher(data)
   })
-//  assert.throws(function(){neo.createNode(12, function(){})}, Error, "Invalid data sent: 12")
+  assert.throws(function(){neo.createNode(12, function(){})}, Error, "Invalid data sent: 12")
 }
 
-exports['test getNode'] = function(assert) {
+exports['test getNode()'] = function(assert) {
   neo.getNode(1, function(data){
     var json = JSON.parse(data)
     var expected = {
@@ -52,53 +52,53 @@ exports['test getNode'] = function(assert) {
       }
     }
   })
-  //assert.throws(function(){neo.getNode(123456)})
+  assert.throws(function(){neo.getNode(123456)})
 }
 
-exports['test setPropertiesOnNode'] = function() {
+exports['test setPropertiesOnNode()'] = function() {
   neo.setPropertiesOnNode(1, {expresso: "test"}, function(data){
     
   })
 }
 
-exports['test getPropertiesOnNode'] = function() {
+exports['test getPropertiesOnNode()'] = function() {
   
 }
 
-exports['test removePropertiesFromNode'] = function() {}
+exports['test removePropertiesFromNode()'] = function() {}
 
-exports['test setPropertyOnNode'] = function() {}
+exports['test setPropertyOnNode()'] = function() {}
 
-exports['test getPropertyOnNode'] = function() {}
+exports['test getPropertyOnNode()'] = function() {}
 
-exports['test removePropertyFromNode'] = function() {}
+exports['test removePropertyFromNode()'] = function() {}
 
-exports['test deleteNode'] = function() {}
+exports['test deleteNode()'] = function() {}
 
-exports['test createRelationship'] = function() {}
+exports['test createRelationship()'] = function() {}
 
-exports['test setPropertiesOnRelationship'] = function() {}
+exports['test setPropertiesOnRelationship()'] = function() {}
 
-exports['test getPropertiesOnRelationship'] = function() {}
+exports['test getPropertiesOnRelationship()'] = function() {}
 
-exports['test removePropertiesFromRelationship'] = function() {}
+exports['test removePropertiesFromRelationship()'] = function() {}
 
-exports['test setPropertyOnRelationship'] = function() {}
+exports['test setPropertyOnRelationship()'] = function() {}
 
-exports['test getPropertyOnRelationship'] = function() {}
+exports['test getPropertyOnRelationship()'] = function() {}
 
-exports['test removePropertyFromRelationship'] = function() {}
+exports['test removePropertyFromRelationship()'] = function() {}
 
-exports['test deleteRelationship'] = function() {}
+exports['test deleteRelationship()'] = function() {}
 
-exports['test getRelationshipsOnNode'] = function() {}
+exports['test getRelationshipsOnNode()'] = function() {}
 
-exports['test listIndexes'] = function() {}
+exports['test listIndexes()'] = function() {}
 
-exports['test addToIndex'] = function() {}
+exports['test addToIndex()'] = function() {}
 
-exports['test removeFromIndex'] = function() {}
+exports['test removeFromIndex()'] = function() {}
 
-exports['test queryIndex'] = function() {}
+exports['test queryIndex()'] = function() {}
 
-exports['test traverse'] = function() {}
+exports['test traverse()'] = function() {}
