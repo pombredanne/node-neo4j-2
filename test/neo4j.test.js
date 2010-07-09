@@ -3,140 +3,440 @@ var sys = require('sys')
 var vows = require('vows')
 var assert = require ('assert')
 
-function rand(integer) {
-  return Math.floor(Math.random()*(integer + 1))
+function reallyHighInteger(){
+  return 123412341234
 }
 
-var i = rand(1000)
-var j = i;
-var k = i;
-
-while (i === j || i === k || j === k) {
-  j = rand(1000)
-  k = rand(1000)
+function mockNode(location, data) {
+  return {"incoming typed relationships":location + "/relationships/in/{-list|&|types}",
+          "incoming relationships":location + "/relationships/in",
+          "all relationships":location + "/relationships/all",
+          "create relationship":location + "/relationships",
+          "data":data,
+          "traverse":location + "/traverse/{returnType}",
+          "property":location + "/properties/{key}",
+          "self":location,
+          "properties":location + "/properties",
+          "all typed relationships":location + "/relationships/all/{-list|&|types}",
+          "outgoing typed relationships":location + "/relationships/out/{-list|&|types}",
+          "outgoing relationships":location + "/relationships/out"}
 }
 
-exports['test getRoot()'] = function(assert) {
-  neo.getRoot(function(data){
-    var json = JSON.parse(data)
-    var expected = {
-      "index" : "http://localhost/index",
-      "node" : "http://localhost/node",
-      "reference node" : "http://localhost/node/0"
+vows.describe("Neo4j REST Client").addBatch({
+  "getRoot()": {
+    topic: function(){
+      neo.getRoot(this.callback)
+    },
+    
+    "should pass the default root node values to the callback": function(err, data){
+      assert.isNull(err)
+      var expected = {
+        "index" : "http://localhost/index",
+        "node" : "http://localhost/node",
+        "reference node" : "http://localhost/node/0"
+      }
+      var json = JSON.parse(data)
+      assert.deepEqual(json, expected)
     }
-    assert.eql(json, expected)
-  })
-}
-
-exports['test createNode()'] = function(assert) {
-  var locationMatcher = function(url){assert.ok(url.match(/\/node\/\d{1,}$/))}
-  neo.createNode(function(data){
-    locationMatcher(data)
-  })
-  neo.createNode({test: "me", out: "please"}, function(data){
-    locationMatcher(data)
-  })
-//  neo.createNode(12, function(e){assert.throws(function(){throw e}, Error, "Invalid data sent: 12")})
-}
-
-exports['test getNode()'] = function(assert) {
-  neo.getNode(1, function(data){
-    var json = JSON.parse(data)
-    var expected = {"incoming typed relationships":"http://localhost/node/1/relationships/in/{-list|&|types}",
-                    "incoming relationships":"http://localhost/node/1/relationships/in",
-                    "all relationships":"http://localhost/node/1/relationships/all",
-                    "create relationship":"http://localhost/node/1/relationships",
-                    "data":{"out":"please","test":"me"},
-                    "traverse":"http://localhost/node/1/traverse/{returnType}",
-                    "property":"http://localhost/node/1/properties/{key}",
-                    "self":"http://localhost/node/1",
-                    "properties":"http://localhost/node/1/properties",
-                    "all typed relationships":"http://localhost/node/1/relationships/all/{-list|&|types}",
-                    "outgoing typed relationships":"http://localhost/node/1/relationships/out/{-list|&|types}",
-                    "outgoing relationships":"http://localhost/node/1/relationships/out"}
-    assert.eql(json, expected)
-  })
-  neo.getNode(123456, function(e){assert.throws(function(){throw e}, Error, "Node not found")})
-}
-
-exports['test setPropertiesOnNode()'] = function(assert) {
-  neo.setPropertiesOnNode(1, {expresso: "test"}, function(data){
-    assert.ok(data)
-  })
-  neo.setPropertiesOnNode(1, "Test", function(data){
-    assert.throws(function(){throw e}, Error, "Invalid data sent")
-  })
-  neo.setPropertiesOnNode(123412341234, {expresso: "test"}, function(data){
-    assert.throws(function(){throw e}, Error, "Node not found")
-  })
-}
-
-exports['test getPropertiesOnNode()'] = function(assert) {
-  neo.getPropertiesOnNode(1, function(data){
-    var json = JSON.parse(data)
-    var expected = {"out":"please","test":"me"}
-    assert.eql(json, expected)
-  })
-  neo.getPropertiesOnNode(12341234, function(data){
-    assert.throws(function(){throw e}, Error, "Node not found")
-  })
-}
-
-exports['test removePropertiesFromNode()'] = function(assert) {
-  neo.removePropertiesFromNode(2, function(data){
-    assert.ok(data)
-  })
-  neo.removePropertiesFromNode(12341234, function(data){
-    assert.throws(function(){throw e}, Error, "Node not found")
-  })
-}
-
-exports['test setPropertyOnNode()'] = function(assert) {
-  neo.setPropertyOnNode(2, "test", "me", function(data){
-    assert.ok(data)
-  })
-  neo.setPropertyOnNode(12341234, "test", "me", function(data){
-    assert.throws(function(){throw e}, Error, "Node not found")
-  })
-}
-
-exports['test getPropertyOnNode()'] = function(assert) {
-  neo.getPropertyOnNode(1, "test", function(data){
-    assert.eql("me", data)
-  })
-}
-
-exports['test removePropertyFromNode()'] = function(assert) {
+  },
   
-}
+  "createNode()": {
+    "with no properties": {
+      topic: function() {
+        neo.createNode(this.callback)
+      },
+      
+      "should pass the location of the new node to the callback": function(err, location){
+        assert.isNull(err)
+        assert.match(location, new RegExp("/node/\\d+$"))
+      },
+    
+      "should create": {
+        topic: function(location){
+          neo.get(location, this.callback)
+        },
+        
+        "a new empty node": function(err, data){
+          assert.isNull(err)
+          var json = JSON.parse(data)
+          var location = json['self']
+          var expected = mockNode(location, {})
+          assert.deepEqual(expected, json)
+        }
+      }
+    },
 
-exports['test deleteNode()'] = function(assert) {}
-
-exports['test createRelationship()'] = function(assert) {}
-
-exports['test setPropertiesOnRelationship()'] = function(assert) {}
-
-exports['test getPropertiesOnRelationship()'] = function(assert) {}
-
-exports['test removePropertiesFromRelationship()'] = function(assert) {}
-
-exports['test setPropertyOnRelationship()'] = function(assert) {}
-
-exports['test getPropertyOnRelationship()'] = function(assert) {}
-
-exports['test removePropertyFromRelationship()'] = function(assert) {}
-
-exports['test deleteRelationship()'] = function(assert) {}
-
-exports['test getRelationshipsOnNode()'] = function(assert) {}
-
-exports['test listIndexes()'] = function(assert) {}
-
-exports['test addToIndex()'] = function(assert) {}
-
-exports['test removeFromIndex()'] = function(assert) {}
-
-exports['test queryIndex()'] = function(assert) {}
-
-exports['test traverse()'] = function(assert) {}
-
+    "with properties": {
+      topic: function(){
+        neo.createNode({test: "me", out: "please"}, this.callback)
+      },
+      
+      "should pass the location of the new node to the callback": function(err, location){
+        assert.isNull(err)
+        assert.match(location, new RegExp("/node/\\d+$"))
+      },
+      
+      "should create": {
+        topic: function(location){
+          neo.get(location, this.callback)
+        },
+        
+        "a new node with the passed properties": function(err, data){
+          assert.isNull(err)
+          var json = JSON.parse(data)
+          var location = json['self']
+          var expected = mockNode(location, {test: "me", out: "please"})
+          assert.deepEqual(expected, json)
+        }
+      }
+    },
+    
+    "with invalid property data": {
+      topic: function(){
+        neo.createNode("Invalid data", this.callback)
+      },
+      
+      "should pass an 'Invalid data sent' error to the callback": function(err, data){
+        assert.instanceOf(err, Error)
+        assert.strictEqual(err.message, "Invalid data sent")
+      }
+    }
+  },
+  
+  "getNode()": {
+    "with an existing node id": {
+      topic: function(){
+        neo.getNode(1, this.callback)
+      },
+    
+      "should pass to the callback the JSON of the node with the given id": function(err, data){
+        var json = JSON.parse(data)
+        var expected = mockNode("http://localhost/node/1", {test: "me"})
+        assert.deepEqual(json, expected)
+      }
+    },
+    
+    "with a non-existing node id": {
+      topic: function(){
+        neo.getNode(reallyHighInteger(), this.callback)
+      },
+      
+      "should pass an 'Entity not found' error to the callback": function(err, data){
+        assert.instanceOf(err, Error)
+        assert.strictEqual(err.message, "Entity not found")
+      }
+    }
+  },
+  
+  "deleteNode()": {
+    topic: function(){
+      neo.createNode(this.callback)
+    },
+    
+    "with an existing node id": {
+      topic: function(location){
+        var id = location.match(/\/node\/(\d+)/)[1]
+        neo.deleteNode(id, this.callback)
+      },
+    
+      "should delete the node": {
+        topic: function(data, location){
+          var id = location.match(/\/node\/(\d+)/)[1]
+          neo.getNode(id, this.callback)
+        },
+        
+        "with the given id": function(err, data){
+          assert.instanceOf(err, Error)
+          assert.strictEqual(err.message, "Entity not found")
+        }
+      },
+      
+      "should pass an empty string to the callback": function(err, data){
+        assert.typeOf(data, 'string')
+        assert.isEmpty(data)
+      }
+    },
+    
+    "with a non-existing node id": {
+      topic: function(){
+        neo.deleteNode(reallyHighInteger(), this.callback)
+      },
+      
+      "should pass an 'Entity not found' error to the callback": function(err, data){
+        assert.instanceOf(err, Error)
+        assert.strictEqual(err.message, "Entity not found")
+      }
+    }
+  },
+  
+  "setPropertiesOnNode()": {
+    "with an existing node id": {
+      topic: function(){
+        return Math.floor(Math.random()*200)
+      },
+      
+      "with valid properties": {
+        topic: function(id){
+          neo.setPropertiesOnNode(id, {valid: "properties"}, this.callback)
+        },
+        
+        "should set the properties on the node": {
+          topic: function(data, id) {
+            neo.getNode(id, this.callback)
+          },
+          
+          "with the given id": function(err, data) {
+            var json = JSON.parse(data)
+            var data = json.data
+            assert.deepEqual(data, {valid: "properties"})
+          }
+        },
+        
+        "should pass an empty string to the callback": function(err, data){
+          assert.typeOf(data, 'string')
+          assert.isEmpty(data)
+        }
+      },
+      
+      "with invalid properties": {
+        topic: function(id){
+          neo.setPropertiesOnNode(id, "Invalid data", this.callback)
+        },
+        
+        "should pass an 'Invalid data sent' error to the callback": function(err, data){
+          assert.instanceOf(err, Error)
+          assert.strictEqual(err.message, "Invalid data sent")
+        }
+      }
+    },
+    
+    "with a non-existing node id": {
+      topic: function(){
+        neo.setPropertiesOnNode(reallyHighInteger(), {}, this.callback)
+      },
+      
+      "should pass an 'Entity not found' error to the callback": function(err, data){
+        assert.instanceOf(err, Error)
+        assert.strictEqual(err.message, "Entity not found")
+      }
+    }
+  },
+  
+  "getPropertiesOnNode()": {
+    "with an existing node id": {
+      "for a node with properties": {
+        topic: function(){
+          neo.getPropertiesOnNode(1, this.callback)
+        },
+      
+        "should pass to the callback the JSON of the node's properties with the given id": function(err, data){
+          var json = JSON.parse(data)
+          var expected = {test: "me"}
+          assert.deepEqual(json, expected)
+        }
+      },
+      
+      "for a node with no properties": {
+        topic: function(){
+          neo.getPropertiesOnNode(2, this.callback)
+        },
+        
+        "should pass an empty string to the callback": function(err, data){
+          assert.typeOf(data, 'string')
+          assert.isEmpty(data)
+        }
+      }
+    },
+    
+    "with a non-existing node id": {
+      topic: function(){
+        neo.getPropertiesOnNode(reallyHighInteger(), this.callback)
+      },
+      
+      "should pass an 'Entity not found' error to the callback": function(err, data){
+        assert.instanceOf(err, Error)
+        assert.strictEqual(err.message, "Entity not found")
+      }
+    }
+  },
+  
+//  "removePropertiesFromNode()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "setPropertyOnNode()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "getPropertyOnNode()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "removePropertyFromNode()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "createRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "getRelationshipsOnNode()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "deleteRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "setPropertiesOnRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "getPropertiesOnRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "removePropertiesFromRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "setPropertyOnRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "getPropertyOnRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "removePropertyFromRelationship()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "listIndexes()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "addToIndex()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "removeFromIndex()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "queryIndex()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  },
+//  
+//  "traverse()": {
+//    "should pass the node JSON for the given id to the callback": function(){
+//        
+//    },
+//    
+//    "should pass an error to the callback when a node with the given id cannot be found": function(){
+//        
+//    }
+//  }
+}).export(module)
